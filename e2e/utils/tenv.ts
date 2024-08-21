@@ -337,7 +337,7 @@ export function createTenv(cwd: string): Tenv {
           'supergraph',
           supergraph,
           createPortOpt(port),
-          supergraph && `supergraph ${supergraph}`,
+          ...args,
         );
       } /* serveRunner === 'node' */ else {
         [proc, waitForExit] = await spawn(
