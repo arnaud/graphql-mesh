@@ -83,7 +83,12 @@ export interface CLIContext {
   productName: string;
   /** @default 'serve GraphQL federated architecture for any API service(s)' */
   productDescription: string;
-  /** @default 'mesh-serve' */
+  /**
+   * A safe binary executable name, should not contain any special
+   * characters or white-spaces.
+   *
+   * @default 'mesh-serve'
+   */
   binName: string;
   /** @default globalThis.__VERSION__ */
   version: string;
@@ -217,7 +222,7 @@ export function run(userCtx: Partial<CLIContext>) {
     productName: 'Mesh',
     productDescription: 'serve GraphQL federated architecture for any API service(s)',
     binName: 'mesh-serve',
-    version: globalThis.__VERSION__,
+    version: globalThis.__VERSION__ || 'dev',
     ...userCtx,
   };
 
