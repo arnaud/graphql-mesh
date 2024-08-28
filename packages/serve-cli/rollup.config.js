@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { defineConfig } from 'rollup';
+import { defineConfig, rollup } from 'rollup';
 import tsConfigPaths from 'rollup-plugin-tsconfig-paths';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -43,7 +43,7 @@ const deps = {
   // default transports should be in the container
   'node_modules/@graphql-mesh/transport-common/index': '../transports/common/src/index.ts',
   'node_modules/@graphql-mesh/transport-http/index': '../transports/http/src/index.ts',
-  // extras for docker only
+  // extras for docker/bin only
   'node_modules/@graphql-mesh/plugin-prometheus/index': '../plugins/prometheus/src/index.ts',
   'node_modules/@graphql-mesh/plugin-http-cache/index': '../plugins/http-cache/src/index.ts',
   'node_modules/@graphql-mesh/plugin-jwt-auth/index': '../plugins/jwt-auth/src/index.ts',
@@ -55,7 +55,7 @@ const deps = {
 };
 
 if (process.env.E2E_SERVE_RUNNER === 'docker') {
-  console.warn('⚠️ Bundling extra modules for e2e tests!');
+  console.warn('⚠️ Bundling extra modules for e2e tests with docker!');
   // extras specific to the docker serve runner in e2e tests
   deps['node_modules/@graphql-mesh/compose-cli/index'] = '../compose-cli/src/index.ts';
   deps['node_modules/@e2e/opts/index'] = '../../e2e/utils/opts.ts';
@@ -102,6 +102,7 @@ export default defineConfig({
     json(), // support importing json files to esm (needed for commonjs() plugin)
     sucrase({ transforms: ['typescript'] }), // transpile typescript
     packagejson(), // add package jsons
+    injectIncludeHooks(),
   ],
 });
 
@@ -257,6 +258,45 @@ function graphql() {
         );
       }
       return augmented;
+    },
+  };
+}
+
+/**
+ * @type {import('rollup').PluginImpl}
+ */
+function injectIncludeHooks() {
+  let injected = false;
+  const injectionDest = "register('@graphql-mesh/include/hooks'"; // intentionally no closing bracked because there's more arguments
+  return {
+    name: 'injectIncludeHooks',
+    async renderChunk(chunk) {
+      if (!chunk.includes(injectionDest)) return;
+      if (injected) throw new Error('Include hooks already injected');
+      injected = true;
+
+      const bundle = await rollup({
+        input: '../include/src/hooks.ts',
+        plugins: [nodeResolve(), commonjs(), sucrase({ transforms: ['typescript'] })],
+      });
+
+      const { output: outputs } = await bundle.generate({
+        format: 'esm',
+        inlineDynamicImports: true,
+      });
+      const script = outputs[0].code;
+
+      return chunk.replace(
+        injectionDest,
+        () => `register(${JSON.stringify(`data:text/javascript,${encodeURIComponent(script)}`)}`,
+      );
+    },
+    generateBundle() {
+      if (!injected) {
+        throw new Error(
+          `Include hooks cannot be injected, does "${injectionDest}" exist in the source code?`,
+        );
+      }
     },
   };
 }

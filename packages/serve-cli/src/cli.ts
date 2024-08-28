@@ -1,11 +1,12 @@
-import '@graphql-mesh/include/register-tsconfig-paths';
 import 'dotenv/config'; // inject dotenv options to process.env
 import 'json-bigint-patch'; // JSON.parse/stringify with bigints support
 
 import cluster from 'node:cluster';
+import module from 'node:module';
 import { availableParallelism, release } from 'node:os';
 import parseDuration from 'parse-duration';
 import { Command, InvalidArgumentError, Option } from '@commander-js/extra-typings';
+import type { InitializeData } from '@graphql-mesh/include/hooks';
 import type {
   MeshServeConfigProxy,
   MeshServeConfigSubgraph,
@@ -217,6 +218,15 @@ let cli = new Command()
   );
 
 export function run(userCtx: Partial<CLIContext>) {
+  module.register('@graphql-mesh/include/hooks', {
+    parentURL: 'data:', // default
+    data: {
+      packedDepsPath:
+        // WILL BE AVAILABLE IN SEA ENVIRONMENTS (see install-sea-packed-deps.cjs and rollup.binary.config.js)
+        globalThis.__PACKED_DEPS_PATH__ || '',
+    } satisfies InitializeData,
+  });
+
   const ctx: CLIContext = {
     log: new DefaultLogger(),
     productName: 'Mesh',

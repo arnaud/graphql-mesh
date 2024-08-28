@@ -6142,6 +6142,7 @@ __metadata:
     get-tsconfig: "npm:^4.7.6"
     glob: "npm:^11.0.0"
     jiti: "npm:^1.21.6"
+    sucrase: "npm:^3.35.0"
   languageName: unknown
   linkType: soft
 
@@ -35245,7 +35246,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sucrase@npm:^3.27.0, sucrase@npm:^3.32.0":
+"sucrase@npm:^3.27.0, sucrase@npm:^3.32.0, sucrase@npm:^3.35.0":
   version: 3.35.0
   resolution: "sucrase@npm:3.35.0"
   dependencies:

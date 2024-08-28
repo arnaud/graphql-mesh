@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { lstat } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
-import { include } from '@graphql-mesh/include';
 import type { MeshServeConfig } from '@graphql-mesh/serve-runtime';
 import type { Logger } from '@graphql-mesh/types';
 import type { ServerConfig } from './server';
@@ -33,7 +32,7 @@ export async function loadConfig<TContext extends Record<string, any> = Record<s
         .catch(() => false);
       if (exists) {
         !opts.quiet && opts.log.info(`Found default config file ${configPath}`);
-        const module = await include(absoluteConfigPath, opts.nativeImport);
+        const module = await import(absoluteConfigPath);
         importedConfig = Object(module).serveConfig || null;
         if (!importedConfig) {
           !opts.quiet &&
@@ -54,7 +53,7 @@ export async function loadConfig<TContext extends Record<string, any> = Record<s
     if (!exists) {
       throw new Error(`Cannot find config file at ${configPath}`);
     }
-    const module = await include(configPath, opts.nativeImport);
+    const module = await import(configPath);
     importedConfig = Object(module).serveConfig || null;
     if (!importedConfig) {
       throw new Error(`No "serveConfig" exported from config file at ${configPath}`);
